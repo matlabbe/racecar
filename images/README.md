@@ -24,6 +24,21 @@
     * Note to have Internet on the RaceCar: disconnect from the Hotspot connection and select your preferred Wi-Fi network. To do so remotely, use VNC with the Ethernet connection, then change the Wi-Fi network.
 
 
+# Importing a Virtual Machine
+
+1. Install [VirtualBox](https://www.virtualbox.org/). Optionally, the VirtualBox Extension Pack can also be installed for USB2-USB3 support.
+2. Click here to [download the default virtual machine](https://usherbrooke-my.sharepoint.com/:u:/g/personal/lali3401_usherbrooke_ca/ET_KS0N6qFpPjCdlN4sOIrYBsIMreMN1X6O5qblisWM_Rw?e=6nY1pi),
+3. Open VirtualBox the import the VM using the file->import option. Then select the VM and edit its Settings:
+    1. System->Processor: set at least 2 to 6 processors (or 50% of your CPUs). 
+	2. Network->Adapter 2: Enable it, attached to "Bridged Adapter" with your wireless network adapter. This will be used to connect the virtual machine to ROS on the RaceCar.
+4. Start the VM
+
+---
+**NOTE**
+
+To see the topic publish by the racecar using a VM you need the VM need to be mount with a Bridged Adapter to your wifi card if you are for exemple connected to your racecar using the hotspot 
+
+---
 
 # Creating a Virtual Machine
 If your are configuring a native Ubuntu 22.04 computer skip to step 6. If you want to create a Virtual machine from scratch follow all the steps : 
@@ -42,17 +57,3 @@ If your are configuring a native Ubuntu 22.04 computer skip to step 6. If you wa
     $ ./setup_vm_ubuntu2204_humble.bash
     ```
 
----
-**NOTE**
-
-To see the topic publish by the racecar using a VM you need the VM need to be mount with a Bridged Adapter to your wifi card if you are for exemple connected to your racecar using the hotspot 
-
----
-
-# Importing a Virtual Machine
-
-1. Install [VirtualBox](https://www.virtualbox.org/). Optionally, the VirtualBox Extension Pack can also be installed for USB2-USB3 support.
-2. Open VirtualBox the import the VM using the file->import option. Then select the VM and edit its Settings:
-    1. System->Processor: set at least 2 to 6 processors (or 50% of your CPUs). 
-	2. Network->Adapter 2: Enable it, attached to "Bridged Adapter" with your wireless network adapter. This will be used to connect the virtual machine to ROS on the RaceCar.
-3. Start the VM
