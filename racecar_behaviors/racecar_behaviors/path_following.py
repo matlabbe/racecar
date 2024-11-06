@@ -13,6 +13,8 @@ class PathFollowing(Node):
         self.angle_div = self.declare_parameter('angle_div', 8).value
         self.distance = self.declare_parameter('distance', 0.7).value
         self.distance_short = self.declare_parameter('distance_short', 0.45).value
+        self.max_speed = self.declare_parameter('max_speed', 1).value
+        self.max_steering = self.declare_parameter('max_steering', 0.37).value
 
         self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 1)
         self.scan_sub = self.create_subscription(LaserScan, 'scan', self.scan_callback, 1)
@@ -26,8 +28,8 @@ class PathFollowing(Node):
         #ranges = msg.ranges[l2:len(msg.ranges)] + msg.ranges[0:l2]
         
         twist = Twist()
-        twist.linear.x = self.max_speed
-        twist.angular.z = 0
+        twist.linear.x = float(self.max_speed)
+        twist.angular.z = 0.0
            
         self.cmd_vel_pub.publish(twist)
 
