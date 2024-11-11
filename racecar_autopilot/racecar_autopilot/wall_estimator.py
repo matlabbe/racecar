@@ -44,7 +44,7 @@ class WallEstimator(Node):
         theta_data  = []
         n_good_scan = 0
         
-        for i in range(70,110):
+        for i in range(140,220):
             
             scan_is_good = (( ranges[i] > scan_msg.range_min) &
                             ( ranges[i] < scan_msg.range_max) )
@@ -83,7 +83,7 @@ class WallEstimator(Node):
         theta_data  = []
         n_good_scan = 0
         
-        for i in range(250,290):
+        for i in range(500,580):
             
             scan_is_good = (( ranges[i] > scan_msg.range_min) &
                             ( ranges[i] < scan_msg.range_max) )
@@ -126,16 +126,16 @@ class WallEstimator(Node):
         
         msg = Twist()
         
-        msg.linear.y  = self.y_estimation
-        msg.angular.z = self.theta_estimation
+        msg.linear.y  = float(self.y_estimation)
+        msg.angular.z = float(self.theta_estimation)
         
         # debug
         
-        msg.linear.x  = self.y_left
-        msg.linear.z  = self.y_right
+        msg.linear.x  = float(self.y_left)
+        msg.linear.z  = float(self.y_right)
         
-        msg.angular.x = self.theta_left
-        msg.angular.y = self.theta_right
+        msg.angular.x = float(self.theta_left)
+        msg.angular.y = float(self.theta_right)
         
         
         self.pub_y.publish( msg )
