@@ -15,7 +15,7 @@ def launch_setup(context, *args, **kwargs):
         package='image_transport',
         executable='republish',
         name='republish_raspicam',
-        remappings=[('in', 'raspicam_node/image'),
+        remappings=[('in', 'racecar/camera'),
                    ('out', 'raspicam_node/image')],
         arguments=['raw']
     )
@@ -24,7 +24,7 @@ def launch_setup(context, *args, **kwargs):
         package='racecar_behaviors',
         executable='laserscan_to_pointcloud',
         name='laserscan_to_pointcloud',
-        remappings=[('/scan', 'scan'), ('converted_pc', 'scan_cloud')]
+        remappings=[('/scan', '/racecar/scan'), ('converted_pc', 'scan_cloud')]
     )
 
     pointcloud_to_depthimage_node = Node(
@@ -32,7 +32,7 @@ def launch_setup(context, *args, **kwargs):
         executable='pointcloud_to_depthimage',
         name='pointcloud_to_depthimage',
         parameters=[{'fixed_frame_id': 'racecar/odom', 'fill_holes_size': 2}],
-        remappings=[('camera_info', 'raspicam_node/camera_info'), ('cloud', 'scan_cloud'),
+        remappings=[('camera_info', 'racecar/camera_info'), ('cloud', 'scan_cloud'),
                     ('image', 'raspicam_node/depth_registered'), ('image_raw', 'raspicam_node/depth_registered_raw')]
     )
 
@@ -41,10 +41,10 @@ def launch_setup(context, *args, **kwargs):
         executable='blob_detector',
         name='blob_detector',
         output='screen',
-        remappings=[('image', 'raspicam_node/image'), ('camera_info', 'raspicam_node/camera_info'),
+        remappings=[('image', 'raspicam_node/image'), ('camera_info', 'racecar/camera_info'),
                     ('depth', 'raspicam_node/depth_registered')],
         parameters=[{'map_frame_id': 'racecar/odom', 'frame_id': 'racecar/base_footprint',
-                     'object_frame_id': 'racecar/object', 'color_hue': 10}]
+                     'object_frame_id': 'racecar/object', 'color_hue': 160}]
     )
 
     # Define debug nodes

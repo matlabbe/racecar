@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 
 import rclpy
 from rclpy.node import Node
@@ -31,7 +31,7 @@ class BlobDetector(Node):
         self.max_speed = self.declare_parameter('max_speed', 1).value
         self.max_steering = self.declare_parameter('max_steering', 0.37).value
         self.picture_distance = self.declare_parameter('picture_distance', 2).value
-        self.color_hue = self.declare_parameter('color_hue', 107).value  # 160=purple, 100=blue, 10=Orange
+        self.color_hue = self.declare_parameter('color_hue', 160).value  # 160=purple, 100=blue, 10=Orange
         self.color_range = self.declare_parameter('color_range', 10).value
         self.color_saturation = self.declare_parameter('color_saturation', 50).value
         self.color_value = self.declare_parameter('color_value', 0).value
@@ -65,11 +65,11 @@ class BlobDetector(Node):
           
         # Set Convexity filtering parameters 
         params.filterByConvexity = False
-        params.minConvexity = 0.95
+        params.minConvexity = 0.2
               
         # Set inertia filtering parameters 
         params.filterByInertia = False
-        params.minInertiaRatio = 0.1
+        params.minInertiaRatio = 0.001
         
         self.detector = cv2.SimpleBlobDetector_create(params)
         
@@ -86,8 +86,8 @@ class BlobDetector(Node):
         self.depth_sub = self.create_subscription(Image, 'depth', self.depth_callback, 10)
         self.info_sub = self.create_subscription(CameraInfo, 'camera_info', self.info_callback, 10)
 
-        self.depth = Image
-        self.info = CameraInfo
+        self.depth = Image()
+        self.info = CameraInfo()
 
     def config_callback(self, config, level):
         self.get_logger().info("Reconfigure Request: {color_hue}, {color_saturation}, {color_value}, {color_range}, {border}".format(**config))
@@ -105,25 +105,29 @@ class BlobDetector(Node):
 
     def depth_callback(self, depth_msg):
         self.depth = depth_msg
+        self.get_logger().info(f"Depth encoding: {depth_msg.encoding}")
     
     def info_callback(self, info_msg):
         self.info = info_msg
+        self.get_logger().info('K')
 
     def image_callback(self, image):
         depth = self.depth
         info = self.info
+
+        # self.get_logger().info(f"Image encoding: {image.encoding}")
         
         if self.get_clock().now().to_msg().sec - self.wait_time < 5:
             self.twist_pub.publish(Twist())
             return
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+            cv_image = self.bridge.imgmsg_to_cv2(image, image.encoding)
         except CvBridgeError as e:
             print(e)
             
         try:
-            cv_depth = self.bridge.imgmsg_to_cv2(depth, "32FC1")
-        except CvBridgeError as e:
+            cv_depth = self.bridge.imgmsg_to_cv2(depth, depth.encoding)
+        except Exception as e:
             print(e)
         
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
@@ -133,23 +137,35 @@ class BlobDetector(Node):
         
         closestObject = [0,0,0]
         if len(keypoints) > 0:
+
+            self.get_logger().info("detected")
+
             cv_image = cv2.drawKeypoints(cv_image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             
             for i in range(0, len(keypoints)):
-                if self.info.K[0] > 0 and keypoints[i].pt[0] >= self.border and keypoints[i].pt[0] < cv_image.shape[1]-self.border:
+                # msg = str(self.info.k[0] +  keypoints[i].pt[0] + self.border + cv_image.shape[1])
+                # self.get_logger().info(str(self.info.k))
+                # self.get_logger().info(str(keypoints[i].pt[0]))
+                # self.get_logger().info(str(self.border))
+                # self.get_logger().info(str(cv_image.shape[1]))
+                
+                if self.info.k[0] > 0 and keypoints[i].pt[0] >= self.border and keypoints[i].pt[0] < cv_image.shape[1]-self.border:
+                    self.get_logger().info('ici')
                     pts_uv = np.array([[[keypoints[i].pt[0], keypoints[i].pt[1]]]], dtype=np.float32)
-                    info_K = np.array(self.info.K).reshape([3, 3])
-                    info_D = np.array(self.info.D)
-                    info_P = np.array(self.info.P).reshape([3, 4])
+                    info_K = np.array(self.info.k).reshape([3, 3])
+                    info_D = np.array(self.info.d)
+                    info_P = np.array(self.info.p).reshape([3, 4])
                     pts_uv = cv2.undistortPoints(pts_uv, info_K, info_D, info_P)
                     angle = np.arcsin(-pts_uv[0][0][0]) # negative to get angle from forward x axis
                     x = pts_uv[0][0][0]
                     y = pts_uv[0][0][1]
-                    #rospy.loginfo("(%d/%d) %f %f -> %f %f angle=%f deg", i+1, len(keypoints), keypoints[i].pt[0], keypoints[i].pt[1], x, y, angle*180/np.pi)
+
+                    out_msg = str(i+1) + ',' + str(len(keypoints)) + ',' + str(keypoints[i].pt[0]) + ',' + str(keypoints[i].pt[1]) + ',' + str(x) + ',' + str(y) + ',' + str(angle*180/np.pi)
+                    self.get_logger().info(out_msg)
                     
                     # Get depth.
-                    u = int(x * self.info.P[0] + self.info.P[2])
-                    v = int(y * self.info.P[5] + self.info.P[6])
+                    u = int(x * self.info.p[0] + self.info.p[2])
+                    v = int(y * self.info.p[5] + self.info.p[6])
                     depth = -1
                     if u >= 0 and u < cv_depth.shape[1]:
                         for j in range(0, cv_depth.shape[0]):
@@ -219,12 +235,12 @@ class BlobDetector(Node):
                     
 
         # debugging topic
-        if self.image_pub.get_num_connections()>0:
-            cv_image = cv2.bitwise_and(cv_image, cv_image, mask=mask)
-            try:
-                self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
-            except CvBridgeError as e:
-                print(e)
+        # if self.image_pub.get_num_connections()>0:
+        #     cv_image = cv2.bitwise_and(cv_image, cv_image, mask=mask)
+        #     try:
+        #         self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
+        #     except CvBridgeError as e:
+        #         print(e)
 
 
 def main(args=None):
