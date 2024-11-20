@@ -53,12 +53,15 @@ def generate_launch_description():
                 'inverted': False,
                 'angle_compensate': True,
             }],
+            remappings=[('/scan', '/racecar/scan')],
         ),
 
         Node(
-            package='racecar_web_interface',
-            executable='ros2_publisher_camera',
+            package='v4l2_camera',
+            executable='v4l2_camera_node',
             name='camera',
+            remappings=[('image_raw', 'racecar/camera'),
+                        ('camera_info', 'racecar/camera_info')],
         ),
         
     ])

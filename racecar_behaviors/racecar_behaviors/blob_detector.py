@@ -104,16 +104,18 @@ class BlobDetector(Node):
         return response
 
     def depth_callback(self, depth_msg):
+        self.get_logger().info('K')
         self.depth = depth_msg
-        self.get_logger().info(f"Depth encoding: {depth_msg.encoding}")
+        # self.get_logger().info(f"Depth encoding: {depth_msg.encoding}")
     
     def info_callback(self, info_msg):
         self.info = info_msg
-        self.get_logger().info('K')
 
     def image_callback(self, image):
         depth = self.depth
         info = self.info
+        cv_image = np.zeros((1,1))
+        cv_depth = np.zeros((1,1))
 
         # self.get_logger().info(f"Image encoding: {image.encoding}")
         
@@ -121,14 +123,15 @@ class BlobDetector(Node):
             self.twist_pub.publish(Twist())
             return
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(image, image.encoding)
+            cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
         except CvBridgeError as e:
-            print(e)
+             self.get_logger().info(str(e))
             
         try:
-            cv_depth = self.bridge.imgmsg_to_cv2(depth, depth.encoding)
+            cv_depth = self.bridge.imgmsg_to_cv2(depth, "32FC1")
+            self.get_logger().info(str(depth))
         except Exception as e:
-            print(e)
+            pass
         
         hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
         
@@ -138,7 +141,7 @@ class BlobDetector(Node):
         closestObject = [0,0,0]
         if len(keypoints) > 0:
 
-            self.get_logger().info("detected")
+            # self.get_logger().info("detected")
 
             cv_image = cv2.drawKeypoints(cv_image, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
             
@@ -150,7 +153,6 @@ class BlobDetector(Node):
                 # self.get_logger().info(str(cv_image.shape[1]))
                 
                 if self.info.k[0] > 0 and keypoints[i].pt[0] >= self.border and keypoints[i].pt[0] < cv_image.shape[1]-self.border:
-                    self.get_logger().info('ici')
                     pts_uv = np.array([[[keypoints[i].pt[0], keypoints[i].pt[1]]]], dtype=np.float32)
                     info_K = np.array(self.info.k).reshape([3, 3])
                     info_D = np.array(self.info.d)
@@ -161,7 +163,7 @@ class BlobDetector(Node):
                     y = pts_uv[0][0][1]
 
                     out_msg = str(i+1) + ',' + str(len(keypoints)) + ',' + str(keypoints[i].pt[0]) + ',' + str(keypoints[i].pt[1]) + ',' + str(x) + ',' + str(y) + ',' + str(angle*180/np.pi)
-                    self.get_logger().info(out_msg)
+                    # self.get_logger().info(out_msg)
                     
                     # Get depth.
                     u = int(x * self.info.p[0] + self.info.p[2])
@@ -235,12 +237,11 @@ class BlobDetector(Node):
                     
 
         # debugging topic
-        # if self.image_pub.get_num_connections()>0:
-        #     cv_image = cv2.bitwise_and(cv_image, cv_image, mask=mask)
-        #     try:
-        #         self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
-        #     except CvBridgeError as e:
-        #         print(e)
+        cv_image = cv2.bitwise_and(cv_image, cv_image, mask=mask)
+        try:
+            self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
+        except CvBridgeError as e:
+            print(e)
 
 
 def main(args=None):
